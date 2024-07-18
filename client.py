@@ -40,7 +40,6 @@ ADDR = (SERVER, PORT)
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(ADDR)
 
-removed_enemies = []
 data = {}
 
 def send_dict(msg):
@@ -433,22 +432,10 @@ def main(addr):
                 break
 
         enemies_data = json.loads(enmies_data_str)
-        if not data_dict['newlevel']:
-            while True:
-                msg_length = client.recv(HEADER).decode(FORMAT)
-                if msg_length:
-                    msg_length = int(msg_length)
-                    removed_enemies_str = client.recv(msg_length).decode(FORMAT)
-                    removed_enemies = json.loads(removed_enemies_str)
-                    for i in removed_enemies:
-                        enemies.remove(enemies[i])
-                    # for enemy in enemies:
-                    #     enemy.y +=10
-        else:
-            enemies = []
-            for i in range(len(enemies_data)):
-                enemy = Enemy(enemies_data[i]['ex'], enemies_data[i]['ey'], enemies_data[i]['ecolor'])
-                enemies.append(enemy)
+        enemies = []
+        for i in range(len(enemies_data)):
+            enemy = Enemy(enemies_data[i]['ex'], enemies_data[i]['ey'], enemies_data[i]['ecolor'])
+            enemies.append(enemy)
 
 
 

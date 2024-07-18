@@ -34,8 +34,7 @@ BG = pygame.transform.scale(pygame.image.load(os.path.join("assets", "background
 ready_players = 0
 user_count = 0
 enemies = []
-removed_enemies = [] # the indexes of the removed enemies
-data = {'newlevel':True, 'ready':False, 'level':0 ,'user1':'0.0.0.0','user2':'0.0.0.0','x1':0, 'y1':0,'health1':100, 'lost1':False, 'x2':0, 'y2':0, 'health2':100, 'lost2': False, 'win1':False, 'win2':False}
+data = {'ready':False, 'level':0 ,'user1':'0.0.0.0','user2':'0.0.0.0','x1':0, 'y1':0,'health1':100, 'lost1':False, 'x2':0, 'y2':0, 'health2':100, 'lost2': False, 'win1':False, 'win2':False}
 wave_length = 10
 enemy_vel = 4
 level = 0
@@ -72,7 +71,6 @@ def send(msg, conn):
     conn.send(send_length)
     conn.send(message)
     #print(client.recv(2048).decode(FORMAT))
-    
 semaphore = threading.Semaphore()
 semaphore2 = threading.Semaphore()
 semaphore3 = threading.Semaphore()
@@ -83,8 +81,6 @@ semaphore7 = threading.Semaphore()
 semaphore8 = threading.Semaphore()
 semaphore9 = threading.Semaphore()
 semaphore10 = threading.Semaphore()
-
-
 
 class Laser:
     def __init__(self, x, y, img):
@@ -227,7 +223,6 @@ def handle_client_disconnect(conn, addr):
     global level
     global enemy_vel
     global wave_length
-    global removed_enemies
     print("whaaaaaaaaahhhhhh")
     data['win1'] = False
     data['win2'] = False
@@ -266,7 +261,6 @@ def handle_client(conn, addr):
     global ready_players
     global user_count
     global enemies
-    global removed_enemies
     global wave_length
     global enemy_vel
     global level
@@ -378,7 +372,7 @@ def handle_client(conn, addr):
                         data['lost1'] =False
                         data['lost2'] =False
                         data['ready'] = False
-                        removed_enemies = []
+                        
                         level = 0
                         enemy = []
                         enemy_vel = 0
@@ -415,15 +409,11 @@ def handle_client(conn, addr):
             flag5 = not(flag5)
             if flag5:
                 if len(enemies) == 0:
-                    removed_enemies =[]
-                    data['newlevel'] = True
                     level += 1
                     wave_length += 10
                     for i in range(wave_length):
                         enemy = Enemy(random.randrange(50, WIDTH-100), random.randrange(-1500, -100), random.choice(["red", "blue", "green"]))
                         enemies.append(enemy)
-                else:
-                    data['newlevel'] = False
 
 
         while True:
@@ -465,23 +455,19 @@ def handle_client(conn, addr):
         with semaphore2:
             flag = not flag
             if flag:
-                i = 0
-                while i < len(enemies):
-                    enemies[i].move(enemy_vel)
+                for enemy in enemies[:]:
+                    enemy.move(enemy_vel)
                     # enemy.move_lasers(laser_vel, player)
 
                     # if random.randrange(0, 2*60) == 1:
                     #     enemy.shoot()
 
-                    if collide(enemies[i], player):
+                    if collide(enemy, player):
                         player.health -= 10
-                        enemies.remove(enemies[i])
-                        removed_enemies.append(i)
-                    elif enemies[i].y + enemies[i].get_height() > HEIGHT:
+                        enemies.remove(enemy)
+                    elif enemy.y + enemy.get_height() > HEIGHT:
                     #     lives -= 1
-                        enemies.remove(enemies[i])
-                        removed_enemies.append(i)
-                    i+=1
+                        enemies.remove(enemy)
 
             player.move_lasers(-laser_vel, enemies)
 
@@ -531,10 +517,7 @@ def handle_client(conn, addr):
         lasers_data_str2 = json.dumps(lasers_data2)
         send(lasers_data_str2, conn)
         
-        if not data['newlevel']:
-            removed_enemies_str = json.dumps(removed_enemies)
-            send(removed_enemies_str, conn)
-            
+
         enemies_data = []
         for i in range(len(enemies)):
             if enemies[i].ship_img == RED_SPACE_SHIP:
@@ -548,7 +531,9 @@ def handle_client(conn, addr):
 
         enemies_data_str = json.dumps(enemies_data)
         send(enemies_data_str, conn)
-
+        # conn.send(enemies_data_str.encode(FORMAT))
+                #print(a)
+                #print(i)
         time2 = time.time()
              
 
